@@ -4,28 +4,26 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
 
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const login = async () => {
-    if (!email || !password) {
-      alert("이메일과 비밀번호를 입력해주세요.");
+  const signUp = async () => {
+    if (!nickname || !email || !password) {
+      alert("모든 항목을 입력해주세요.");
       return;
     }
 
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
-
-    console.log("LOGIN DATA:", data);
-    console.log("LOGIN ERROR:", error);
 
     if (error) {
       alert(error.message);
@@ -33,16 +31,26 @@ export default function LoginPage() {
       return;
     }
 
-    if (!data.user) {
-      alert("로그인 정보를 확인할 수 없습니다.");
-      setLoading(false);
-      return;
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          id: data.user.id,
+          nickname,
+          avatar_url: "",
+          bio: "",
+        });
+
+      if (profileError) {
+        alert(profileError.message);
+        setLoading(false);
+        return;
+      }
+
+      alert("회원가입이 완료되었습니다!");
+
+      router.push("/login");
     }
-
-    alert("로그인 성공!");
-
-    router.replace("/admin");
-    router.refresh();
 
     setLoading(false);
   };
@@ -52,8 +60,16 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-2xl bg-zinc-900 p-8 shadow-xl">
 
         <h1 className="mb-8 text-center text-3xl font-bold">
-          PHASEOUT 로그인
+          PHASEOUT 회원가입
         </h1>
+
+        <input
+          type="text"
+          placeholder="닉네임"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          className="mb-4 w-full rounded-lg border border-zinc-700 bg-zinc-800 p-3 outline-none"
+        />
 
         <input
           type="email"
@@ -72,22 +88,22 @@ export default function LoginPage() {
         />
 
         <button
-          onClick={login}
+          onClick={signUp}
           disabled={loading}
-          className="w-full rounded-lg bg-purple-600 p-3 font-bold hover:bg-purple-700"
+          className="w-full rounded-lg bg-purple-600 p-3 font-bold transition hover:bg-purple-700"
         >
-          {loading ? "로그인 중..." : "로그인"}
+          {loading ? "가입 중..." : "회원가입"}
         </button>
 
         <p className="mt-6 text-center text-sm text-gray-400">
-          아직 계정이 없나요?
+          이미 계정이 있으신가요?
         </p>
 
         <button
-          onClick={() => router.push("/signup")}
+          onClick={() => router.push("/login")}
           className="mt-2 w-full rounded-lg border border-zinc-700 p-3 hover:bg-zinc-800"
         >
-          회원가입
+          로그인
         </button>
 
       </div>

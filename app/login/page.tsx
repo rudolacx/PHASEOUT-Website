@@ -24,9 +24,6 @@ export default function LoginPage() {
       password,
     });
 
-    console.log("LOGIN DATA:", data);
-    console.log("LOGIN ERROR:", error);
-
     if (error) {
       alert(error.message);
       setLoading(false);
@@ -41,7 +38,7 @@ export default function LoginPage() {
 
     alert("로그인 성공!");
 
-    router.replace("/admin");
+    router.push("/admin");
     router.refresh();
 
     setLoading(false);

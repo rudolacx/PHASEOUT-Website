@@ -1,279 +1,79 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
+export default function Navbar() {
+  const [user, setUser] = useState<any>(null);
 
-export default function Navbar(){
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
-return(
+    return () => subscription.unsubscribe();
+  }, []);
 
-<nav
+  async function logout() {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  }
 
-className="
-fixed
-top-0
-z-50
-w-full
-border-b
-border-purple-900
-bg-black/80
-backdrop-blur
-"
+  return (
+    <nav className="flex items-center justify-between bg-black px-8 py-4 text-white border-b border-zinc-800">
 
->
+      <Link href="/" className="text-2xl font-bold">
+        PHASEOUT
+      </Link>
 
+      <div className="flex gap-6 items-center">
 
-<div
+        <Link href="/">Home</Link>
 
-className="
-mx-auto
-flex
-max-w-7xl
-items-center
-justify-between
-px-8
-py-5
-"
+        <Link href="/roster">Roster</Link>
 
->
+        <Link href="/achievement">Results</Link>
 
+        <Link href="/schedule">Schedule</Link>
 
-{/* LOGO */}
+        <Link href="/news">News</Link>
 
-<Link
+        <Link href="/contact">Contact</Link>
 
-href="/"
+        <Link href="/clips">Clips</Link>
 
-className="
-text-3xl
-font-black
-text-purple-500
-"
+        {user ? (
+          <>
+            <Link href="/profile">Profile</Link>
 
->
+            <button
+              onClick={logout}
+              className="rounded bg-red-600 px-4 py-2 hover:bg-red-700"
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link href="/login">Login</Link>
 
-PHASEOUT
+            <Link
+              href="/signup"
+              className="rounded bg-purple-600 px-4 py-2 hover:bg-purple-700"
+            >
+              Sign Up
+            </Link>
+          </>
+        )}
 
-</Link>
-
-
-
-
-
-{/* MENU */}
-
-<div
-
-className="
-flex
-items-center
-gap-5
-text-sm
-font-bold
-text-white
-"
-
->
-
-
-
-<Link
-
-href="/"
-
-className="
-transition
-hover:text-purple-400
-"
-
->
-
-HOME
-
-</Link>
-
-
-
-
-
-<Link
-
-href="/#roster"
-
-className="
-transition
-hover:text-purple-400
-"
-
->
-
-ROSTER
-
-</Link>
-
-
-
-
-
-<Link
-
-href="/about"
-
-className="
-transition
-hover:text-purple-400
-"
-
->
-
-ABOUT
-
-</Link>
-
-
-
-
-
-<Link
-
-href="/news"
-
-className="
-transition
-hover:text-purple-400
-"
-
->
-
-NEWS
-
-</Link>
-
-
-
-
-
-<Link
-
-href="/schedule"
-
-className="
-transition
-hover:text-purple-400
-"
-
->
-
-SCHEDULE
-
-</Link>
-
-
-
-
-
-<Link
-
-href="/achievement"
-
-className="
-transition
-hover:text-purple-400
-"
-
->
-
-RESULT
-
-</Link>
-
-
-
-
-
-
-{/* X LINK */}
-
-<Link
-
-href="https://x.com/PHASEOUTAPEX"
-
-target="_blank"
-
-rel="noopener noreferrer"
-
-className="
-transition
-hover:text-purple-400
-"
-
->
-
-X
-
-</Link>
-
-
-
-
-
-
-
-<Link
-
-href="/#sponsor"
-
-className="
-transition
-hover:text-purple-400
-"
-
->
-
-SPONSOR
-
-</Link>
-
-
-
-
-
-
-
-<Link
-
-href="/admin"
-
-className="
-rounded
-bg-purple-600
-px-4
-py-2
-transition
-hover:bg-purple-500
-"
-
->
-
-ADMIN
-
-</Link>
-
-
-
-
-
-</div>
-
-
-
-</div>
-
-
-</nav>
-
-
-)
-
+      </div>
+    </nav>
+  );
 }
