@@ -121,11 +121,16 @@ SOCIAL
 </h2>
 
 
-<p className="mt-3 text-gray-400">
+<a
+href="https://x.com/PHASEOUTAPEX"
+target="_blank"
+rel="noopener noreferrer"
+className="mt-3 block text-purple-400 hover:underline"
+>
 
-X / YouTube / Twitch
+X (Twitter) @PHASEOUTAPEX
 
-</p>
+</a>
 
 
 </div>
@@ -156,7 +161,12 @@ CONTACT
 
 <p className="mt-3 text-gray-400">
 
+<a
+href="mailto:unielvtuber@naver.com"
+className="hover:text-purple-400 hover:underline"
+>
 unielvtuber@naver.com
+</a>
 
 </p>
 

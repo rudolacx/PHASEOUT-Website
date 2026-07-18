@@ -49,6 +49,15 @@ export default function Navbar() {
 
         <Link href="/clips">Clips</Link>
 
+        <a
+          href="https://x.com/PHASEOUTAPEX"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-purple-400"
+        >
+          X
+        </a>
+
         {user ? (
           <>
             <Link href="/profile">Profile</Link>
