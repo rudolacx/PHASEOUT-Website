@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import LikeButton from "../components/LikeButton";
 import CommentBox from "../components/CommentBox";
+import VideoPlayer from "../components/VideoPlayer";
 
 type Clip = {
   id: string;
@@ -13,15 +14,6 @@ type Clip = {
   youtube_url: string;
   created_at: string;
 };
-
-function getYoutubeId(url: string) {
-  const reg =
-    /(?:youtu\.be\/|youtube\.com\/watch\?v=|youtube\.com\/embed\/)([^?&/]+)/;
-
-  const match = url.match(reg);
-
-  return match ? match[1] : "";
-}
 
 export default function ClipsPage() {
   const [clips, setClips] = useState<Clip[]>([]);
@@ -88,21 +80,13 @@ export default function ClipsPage() {
 
           {clips.map((clip) => {
 
-            const videoId = getYoutubeId(
-              clip.youtube_url
-            );
-
             return (
               <div
                 key={clip.id}
                 className="rounded-xl bg-zinc-900 p-6"
               >
 
-                <iframe
-                  className="aspect-video w-full rounded-xl"
-                  src={`https://www.youtube.com/embed/${videoId}`}
-                  allowFullScreen
-                />
+                <VideoPlayer url={clip.youtube_url} />
 
                 <h2 className="mt-5 text-3xl font-bold">
                   {clip.title}

@@ -7,14 +7,17 @@ import { supabase } from "@/lib/supabase";
 export default function UploadClipPage() {
   const router = useRouter();
 
+  const [mode, setMode] = useState<"link" | "file">("link");
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function uploadClip() {
-    if (!title || !youtubeUrl) {
-      alert("제목과 유튜브 링크를 입력해주세요.");
+    if (!title || (mode === "link" && !youtubeUrl) || (mode === "file" && !file)) {
+      alert("제목과 영상 링크(또는 파일)를 입력해주세요.");
       return;
     }
 
@@ -30,11 +33,46 @@ export default function UploadClipPage() {
       return;
     }
 
+    let mediaUrl = youtubeUrl;
+
+    if (mode === "file" && file) {
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+      if (!cloudName || !uploadPreset) {
+        alert("Cloudinary 설정이 안 되어 있습니다.");
+        setLoading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error?.message || "파일 업로드에 실패했습니다.");
+        setLoading(false);
+        return;
+      }
+
+      mediaUrl = data.secure_url;
+    }
+
     const { error } = await supabase.from("clips").insert({
       user_id: user.id,
       title,
       description,
-      youtube_url: youtubeUrl,
+      youtube_url: mediaUrl,
     });
 
     setLoading(false);
@@ -71,12 +109,43 @@ export default function UploadClipPage() {
           onChange={(e) => setDescription(e.target.value)}
         />
 
-        <input
-          className="w-full mb-6 rounded bg-zinc-800 p-3"
-          placeholder="https://youtu.be/..."
-          value={youtubeUrl}
-          onChange={(e) => setYoutubeUrl(e.target.value)}
-        />
+        <div className="mb-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode("link")}
+            className={`flex-1 rounded p-3 font-bold ${
+              mode === "link" ? "bg-purple-600" : "bg-zinc-800"
+            }`}
+          >
+            링크로 올리기
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMode("file")}
+            className={`flex-1 rounded p-3 font-bold ${
+              mode === "file" ? "bg-purple-600" : "bg-zinc-800"
+            }`}
+          >
+            파일 업로드 (gif/이미지/영상)
+          </button>
+        </div>
+
+        {mode === "link" ? (
+          <input
+            className="w-full mb-6 rounded bg-zinc-800 p-3"
+            placeholder="https://youtu.be/...  또는 트위치/네이버TV/mp4/gif 링크"
+            value={youtubeUrl}
+            onChange={(e) => setYoutubeUrl(e.target.value)}
+          />
+        ) : (
+          <input
+            type="file"
+            accept="image/gif,image/png,image/jpeg,image/webp,video/mp4,video/webm"
+            className="w-full mb-6 rounded bg-zinc-800 p-3"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+          />
+        )}
 
         <button
           onClick={uploadClip}
