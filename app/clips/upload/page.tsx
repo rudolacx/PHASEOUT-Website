@@ -4,6 +4,48 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+function uploadToCloudinary(
+  file: File,
+  cloudName: string,
+  uploadPreset: string,
+  onProgress: (percent: number) => void
+): Promise<{ secure_url: string }> {
+  return new Promise((resolve, reject) => {
+    const resourceType = file.type.startsWith("video/") ? "video" : "image";
+
+    const xhr = new XMLHttpRequest();
+
+    xhr.open(
+      "POST",
+      `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`
+    );
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      const data = JSON.parse(xhr.responseText);
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data);
+      } else {
+        reject(new Error(data.error?.message || "업로드에 실패했습니다."));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("네트워크 오류로 업로드에 실패했습니다."));
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    xhr.send(formData);
+  });
+}
+
 export default function UploadClipPage() {
   const router = useRouter();
 
@@ -14,6 +56,7 @@ export default function UploadClipPage() {
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   async function uploadClip() {
     if (!title || (mode === "link" && !youtubeUrl) || (mode === "file" && !file)) {
@@ -22,6 +65,7 @@ export default function UploadClipPage() {
     }
 
     setLoading(true);
+    setProgress(0);
 
     const {
       data: { user },
@@ -45,27 +89,20 @@ export default function UploadClipPage() {
         return;
       }
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
+      try {
+        const data = await uploadToCloudinary(
+          file,
+          cloudName,
+          uploadPreset,
+          setProgress
+        );
 
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error?.message || "파일 업로드에 실패했습니다.");
+        mediaUrl = data.secure_url;
+      } catch (err: any) {
+        alert(err.message);
         setLoading(false);
         return;
       }
-
-      mediaUrl = data.secure_url;
     }
 
     const { error } = await supabase.from("clips").insert({
@@ -76,6 +113,7 @@ export default function UploadClipPage() {
     });
 
     setLoading(false);
+    setProgress(0);
 
     if (error) {
       alert(error.message);
@@ -145,6 +183,21 @@ export default function UploadClipPage() {
             className="w-full mb-6 rounded bg-zinc-800 p-3"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
+        )}
+
+        {loading && mode === "file" && (
+          <div className="mb-6">
+            <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div
+                className="h-full bg-purple-600 transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+
+            <p className="mt-2 text-center text-sm text-gray-400">
+              {progress}% 업로드 중...
+            </p>
+          </div>
         )}
 
         <button
