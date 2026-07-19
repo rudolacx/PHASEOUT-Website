@@ -49,7 +49,7 @@ const {data:profile}=await supabase
 
 
 
-if(profile.role !== "admin"){
+if(!profile || profile.role !== "admin"){
 
 
 alert("관리자 권한 없음");
