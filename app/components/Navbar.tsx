@@ -47,6 +47,8 @@ export default function Navbar() {
 
         <Link href="/contact">Contact</Link>
 
+        <Link href="/community">Community</Link>
+
         <Link href="/clips">Clips</Link>
 
         <a

@@ -88,7 +88,7 @@ export default function Community(){
 
       <section className="mt-10">
 
-        <PostWrite/>
+        <PostWrite onPosted={loadPosts} />
 
       </section>
 
