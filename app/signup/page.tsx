@@ -23,6 +23,11 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          nickname,
+        },
+      },
     });
 
     if (error) {
@@ -32,21 +37,6 @@ export default function SignupPage() {
     }
 
     if (data.user) {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          id: data.user.id,
-          nickname,
-          avatar_url: "",
-          bio: "",
-        });
-
-      if (profileError) {
-        alert(profileError.message);
-        setLoading(false);
-        return;
-      }
-
       alert("회원가입이 완료되었습니다!");
 
       router.push("/login");
